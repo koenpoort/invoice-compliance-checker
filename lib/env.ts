@@ -24,6 +24,10 @@ const envSchema = z.object({
     .min(1, "ANTHROPIC_API_KEY is required")
     .startsWith("sk-ant-", "ANTHROPIC_API_KEY must start with 'sk-ant-'"),
 
+  // Upstash Redis (for rate limiting)
+  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+
   // Environment
   NODE_ENV: z
     .enum(["development", "production", "test"])
@@ -32,7 +36,17 @@ const envSchema = z.object({
     .string()
     .optional()
     .transform((val) => val === "true"),
-})
+}).refine(
+  (data) => {
+    // Both Upstash vars required together
+    const hasUpstashUrl = !!data.UPSTASH_REDIS_REST_URL
+    const hasUpstashToken = !!data.UPSTASH_REDIS_REST_TOKEN
+    return hasUpstashUrl === hasUpstashToken
+  },
+  {
+    message: 'Both UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be provided together',
+  }
+)
 
 // Validate and export typed environment variables
 function validateEnv() {

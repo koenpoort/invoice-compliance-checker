@@ -1,81 +1,50 @@
-/**
- * Simple in-memory rate limiter for API routes
- *
- * For production with multiple instances, consider using:
- * - @upstash/ratelimit with Redis
- * - Vercel Edge Config
- * - External rate limiting service
- */
+import { Ratelimit } from '@upstash/ratelimit'
+import { Redis } from '@upstash/redis'
 
-interface RateLimitEntry {
-  count: number
-  resetTime: number
-}
+// Check if Upstash is configured
+const isUpstashConfigured =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
 
-const limitMap = new Map<string, RateLimitEntry>()
-
-// Clean up old entries every 5 minutes
-setInterval(() => {
-  const now = Date.now()
-  for (const [key, entry] of limitMap.entries()) {
-    if (entry.resetTime < now) {
-      limitMap.delete(key)
-    }
-  }
-}, 5 * 60 * 1000)
+// Create rate limiter (if Upstash configured)
+const ratelimit = isUpstashConfigured
+  ? new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(10, '1 m'),
+      analytics: true,
+      prefix: 'invoice-checker',
+    })
+  : null
 
 export interface RateLimitResult {
-  success: boolean
+  allowed: boolean
   limit: number
   remaining: number
   reset: number
 }
 
 /**
- * Check if a request should be rate limited
- *
- * @param identifier - Unique identifier (IP address, user ID, etc.)
- * @param limit - Maximum number of requests allowed
- * @param windowMs - Time window in milliseconds
- * @returns Rate limit result with success status
+ * Check rate limit for an IP address
+ * Returns whether the request is allowed and rate limit info
  */
-export function rateLimit(
-  identifier: string,
-  limit: number = 10,
-  windowMs: number = 60 * 1000 // 1 minute default
-): RateLimitResult {
-  const now = Date.now()
-  const entry = limitMap.get(identifier)
-
-  if (!entry || entry.resetTime < now) {
-    // New entry or expired entry
-    const resetTime = now + windowMs
-    limitMap.set(identifier, { count: 1, resetTime })
+export async function checkRateLimit(ip: string): Promise<RateLimitResult> {
+  if (!ratelimit) {
+    // No rate limiting if Upstash not configured (development)
+    console.warn('Rate limiting disabled: UPSTASH_REDIS_REST_URL not configured')
     return {
-      success: true,
-      limit,
-      remaining: limit - 1,
-      reset: resetTime,
+      allowed: true,
+      limit: 10,
+      remaining: 10,
+      reset: Date.now() + 60000,
     }
   }
 
-  if (entry.count >= limit) {
-    // Rate limit exceeded
-    return {
-      success: false,
-      limit,
-      remaining: 0,
-      reset: entry.resetTime,
-    }
-  }
+  const { success, limit, remaining, reset } = await ratelimit.limit(ip)
 
-  // Increment count
-  entry.count++
   return {
-    success: true,
+    allowed: success,
     limit,
-    remaining: limit - entry.count,
-    reset: entry.resetTime,
+    remaining,
+    reset,
   }
 }
 
@@ -84,8 +53,8 @@ export function rateLimit(
  */
 export function getRateLimitHeaders(result: RateLimitResult): Record<string, string> {
   return {
-    "X-RateLimit-Limit": result.limit.toString(),
-    "X-RateLimit-Remaining": result.remaining.toString(),
-    "X-RateLimit-Reset": new Date(result.reset).toISOString(),
+    'X-RateLimit-Limit': result.limit.toString(),
+    'X-RateLimit-Remaining': result.remaining.toString(),
+    'X-RateLimit-Reset': result.reset.toString(),
   }
 }

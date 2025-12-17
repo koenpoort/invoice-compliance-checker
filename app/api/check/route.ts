@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { extractTextFromPdf } from "@/lib/document-ai"
 import { analyzeInvoiceText } from "@/lib/claude"
 import { calculateCompliance } from "@/lib/compliance"
-import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit"
+import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit"
 
 export const runtime = "nodejs"
 export const maxDuration = 60 // seconds
@@ -11,9 +11,10 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limiting: 10 requests per minute per IP
     const ip = request.headers.get("x-forwarded-for") ?? "anonymous"
-    const rateLimitResult = rateLimit(ip, 10, 60 * 1000)
+    const rateLimitResult = await checkRateLimit(ip)
+    const rateLimitHeaders = getRateLimitHeaders(rateLimitResult)
 
-    if (!rateLimitResult.success) {
+    if (!rateLimitResult.allowed) {
       return NextResponse.json(
         {
           error: "Te veel verzoeken. Probeer het over een minuut opnieuw.",
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
         },
         {
           status: 429,
-          headers: getRateLimitHeaders(rateLimitResult),
+          headers: rateLimitHeaders,
         }
       )
     }
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
         { error: "Geen bestand geüpload" },
         {
           status: 400,
-          headers: getRateLimitHeaders(rateLimitResult),
+          headers: rateLimitHeaders,
         }
       )
     }
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
         { error: "Alleen PDF bestanden toegestaan" },
         {
           status: 400,
-          headers: getRateLimitHeaders(rateLimitResult),
+          headers: rateLimitHeaders,
         }
       )
     }
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
         { error: "Bestand te groot (max 10MB)" },
         {
           status: 400,
-          headers: getRateLimitHeaders(rateLimitResult),
+          headers: rateLimitHeaders,
         }
       )
     }
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
         { error: "Kon geen tekst uit de PDF halen" },
         {
           status: 422,
-          headers: getRateLimitHeaders(rateLimitResult),
+          headers: rateLimitHeaders,
         }
       )
     }
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
     const result = calculateCompliance(fields)
 
     return NextResponse.json(result, {
-      headers: getRateLimitHeaders(rateLimitResult),
+      headers: rateLimitHeaders,
     })
   } catch (error) {
     console.error("API Error:", error)
