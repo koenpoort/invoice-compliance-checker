@@ -25,7 +25,7 @@ describe('calculateCompliance', () => {
       factuurnummer: { found: true, value: 'INV-001' },
       factuurdatum: { found: true, value: '2025-01-15' },
       leverancierNaam: { found: true, value: 'Test BV' },
-      btwNummer: { found: false, value: null },
+      btwNummer: { found: false, value: undefined },
       klantNaam: { found: true, value: 'Klant BV' },
       totaalbedrag: { found: true, value: '€1000' },
     }
@@ -41,8 +41,8 @@ describe('calculateCompliance', () => {
       factuurnummer: { found: true, value: 'INV-001' },
       factuurdatum: { found: true, value: '2025-01-15' },
       leverancierNaam: { found: true, value: 'Test BV' },
-      btwNummer: { found: false, value: null },
-      klantNaam: { found: false, value: null },
+      btwNummer: { found: false, value: undefined },
+      klantNaam: { found: false, value: undefined },
       totaalbedrag: { found: true, value: '€1000' },
     }
 
@@ -57,9 +57,9 @@ describe('calculateCompliance', () => {
       factuurnummer: { found: true, value: 'INV-001' },
       factuurdatum: { found: true, value: '2025-01-15' },
       leverancierNaam: { found: true, value: 'Test BV' },
-      btwNummer: { found: false, value: null },
-      klantNaam: { found: false, value: null },
-      totaalbedrag: { found: false, value: null },
+      btwNummer: { found: false, value: undefined },
+      klantNaam: { found: false, value: undefined },
+      totaalbedrag: { found: false, value: undefined },
     }
 
     const result = calculateCompliance(fields)
@@ -70,12 +70,12 @@ describe('calculateCompliance', () => {
 
   it('returns red status when all fields are missing', () => {
     const fields: ExtractedFields = {
-      factuurnummer: { found: false, value: null },
-      factuurdatum: { found: false, value: null },
-      leverancierNaam: { found: false, value: null },
-      btwNummer: { found: false, value: null },
-      klantNaam: { found: false, value: null },
-      totaalbedrag: { found: false, value: null },
+      factuurnummer: { found: false, value: undefined },
+      factuurdatum: { found: false, value: undefined },
+      leverancierNaam: { found: false, value: undefined },
+      btwNummer: { found: false, value: undefined },
+      klantNaam: { found: false, value: undefined },
+      totaalbedrag: { found: false, value: undefined },
     }
 
     const result = calculateCompliance(fields)
