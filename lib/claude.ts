@@ -10,7 +10,7 @@ const client = new Anthropic({
 // Zod schema for validating Claude response
 const FieldSchema = z.object({
   found: z.boolean(),
-  value: z.string().nullable().optional(),
+  value: z.string().optional(),
 })
 
 const ExtractedFieldsSchema = z.object({
