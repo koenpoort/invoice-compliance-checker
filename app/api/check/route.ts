@@ -92,6 +92,17 @@ export async function POST(request: NextRequest) {
     const message =
       error instanceof Error ? error.message : "Er ging iets mis"
 
-    return NextResponse.json({ error: message }, { status: 500 })
+    // Get rate limit headers for consistent error response format
+    const ip = request.headers.get("x-forwarded-for") ?? "anonymous"
+    const rateLimitResult = await checkRateLimit(ip)
+    const rateLimitHeaders = getRateLimitHeaders(rateLimitResult)
+
+    return NextResponse.json(
+      { error: message },
+      {
+        status: 500,
+        headers: rateLimitHeaders,
+      }
+    )
   }
 }
