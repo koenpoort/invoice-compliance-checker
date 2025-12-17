@@ -1,4 +1,45 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {}
+const nextConfig = {
+  // Enable React strict mode for better development experience
+  reactStrictMode: true,
+
+  // Remove X-Powered-By header for security
+  poweredByHeader: false,
+
+  // Enable compression
+  compress: true,
+
+  // Security headers
+  async headers() {
+    return [
+      {
+        // Apply security headers to all routes
+        source: "/:path*",
+        headers: [
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+          {
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
+          },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+        ],
+      },
+    ]
+  },
+}
 
 export default nextConfig

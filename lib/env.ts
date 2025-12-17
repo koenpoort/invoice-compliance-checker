@@ -39,15 +39,36 @@ function validateEnv() {
   try {
     const parsed = envSchema.parse(process.env)
 
-    // Additional validation: ensure at least one credential method is provided
-    if (
-      !parsed.GOOGLE_APPLICATION_CREDENTIALS &&
-      !parsed.GOOGLE_CREDENTIALS_JSON &&
-      parsed.NODE_ENV !== "production"
-    ) {
-      throw new Error(
-        "Either GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_CREDENTIALS_JSON must be set in development"
-      )
+    // Additional validation: ensure credentials are properly configured
+    if (parsed.NODE_ENV === "production") {
+      // Production: Require GOOGLE_CREDENTIALS_JSON (serverless-friendly)
+      if (!parsed.GOOGLE_CREDENTIALS_JSON) {
+        throw new Error(
+          "GOOGLE_CREDENTIALS_JSON is required in production environments. " +
+            "Set it to the full JSON content of your service account file."
+        )
+      }
+    } else {
+      // Development: Require at least one credential method
+      if (
+        !parsed.GOOGLE_APPLICATION_CREDENTIALS &&
+        !parsed.GOOGLE_CREDENTIALS_JSON
+      ) {
+        throw new Error(
+          "Either GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_CREDENTIALS_JSON must be set in development"
+        )
+      }
+    }
+
+    // Validate GOOGLE_CREDENTIALS_JSON is valid JSON if provided
+    if (parsed.GOOGLE_CREDENTIALS_JSON) {
+      try {
+        JSON.parse(parsed.GOOGLE_CREDENTIALS_JSON)
+      } catch {
+        throw new Error(
+          "GOOGLE_CREDENTIALS_JSON contains invalid JSON. Please check the format."
+        )
+      }
     }
 
     return parsed

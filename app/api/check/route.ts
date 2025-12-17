@@ -2,30 +2,60 @@ import { NextRequest, NextResponse } from "next/server"
 import { extractTextFromPdf } from "@/lib/document-ai"
 import { analyzeInvoiceText } from "@/lib/claude"
 import { calculateCompliance } from "@/lib/compliance"
+import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit"
 
 export const runtime = "nodejs"
 export const maxDuration = 60 // seconds
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: 10 requests per minute per IP
+    const ip = request.ip ?? request.headers.get("x-forwarded-for") ?? "anonymous"
+    const rateLimitResult = rateLimit(ip, 10, 60 * 1000)
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: "Te veel verzoeken. Probeer het over een minuut opnieuw.",
+          retryAfter: new Date(rateLimitResult.reset).toISOString(),
+        },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimitResult),
+        }
+      )
+    }
+
     const formData = await request.formData()
     const file = formData.get("file") as File | null
 
     if (!file) {
-      return NextResponse.json({ error: "Geen bestand geüpload" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Geen bestand geüpload" },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(rateLimitResult),
+        }
+      )
     }
 
     if (file.type !== "application/pdf") {
       return NextResponse.json(
         { error: "Alleen PDF bestanden toegestaan" },
-        { status: 400 }
+        {
+          status: 400,
+          headers: getRateLimitHeaders(rateLimitResult),
+        }
       )
     }
 
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json(
         { error: "Bestand te groot (max 10MB)" },
-        { status: 400 }
+        {
+          status: 400,
+          headers: getRateLimitHeaders(rateLimitResult),
+        }
       )
     }
 
@@ -39,7 +69,10 @@ export async function POST(request: NextRequest) {
     if (!extractedText || extractedText.trim().length === 0) {
       return NextResponse.json(
         { error: "Kon geen tekst uit de PDF halen" },
-        { status: 422 }
+        {
+          status: 422,
+          headers: getRateLimitHeaders(rateLimitResult),
+        }
       )
     }
 
@@ -49,7 +82,9 @@ export async function POST(request: NextRequest) {
     // Calculate compliance result
     const result = calculateCompliance(fields)
 
-    return NextResponse.json(result)
+    return NextResponse.json(result, {
+      headers: getRateLimitHeaders(rateLimitResult),
+    })
   } catch (error) {
     console.error("API Error:", error)
 
