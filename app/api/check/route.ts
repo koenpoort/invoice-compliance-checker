@@ -77,6 +77,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validate text size (prevent token limit errors)
+    const MAX_CHARS = 100_000 // ~25K tokens (conservative: chars/4)
+
+    if (extractedText.length > MAX_CHARS) {
+      return NextResponse.json(
+        {
+          error: "Document te groot om te verwerken",
+          details: `Maximaal ${MAX_CHARS.toLocaleString('nl-NL')} tekens toegestaan. Dit document heeft ${extractedText.length.toLocaleString('nl-NL')} tekens.`,
+        },
+        {
+          status: 413, // Payload Too Large
+          headers: rateLimitHeaders,
+        }
+      )
+    }
+
     // Analyze text using Claude
     const fields = await analyzeInvoiceText(extractedText)
 
