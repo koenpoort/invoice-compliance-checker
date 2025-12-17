@@ -10,7 +10,7 @@ export const maxDuration = 60 // seconds
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting: 10 requests per minute per IP
-    const ip = request.ip ?? request.headers.get("x-forwarded-for") ?? "anonymous"
+    const ip = request.headers.get("x-forwarded-for") ?? "anonymous"
     const rateLimitResult = rateLimit(ip, 10, 60 * 1000)
 
     if (!rateLimitResult.success) {
