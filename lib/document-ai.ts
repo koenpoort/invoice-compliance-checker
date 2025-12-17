@@ -11,6 +11,31 @@ const credentialsJson = env.GOOGLE_CREDENTIALS_JSON
 const isProduction = env.NODE_ENV === "production"
 const DEBUG = env.DEBUG
 
+/**
+ * Maps Document AI error codes to user-friendly Dutch messages
+ */
+function getDocumentAIErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error)
+
+  if (message.includes('INVALID_ARGUMENT')) {
+    return 'PDF-bestand is beschadigd of ongeldig'
+  }
+  if (message.includes('RESOURCE_EXHAUSTED')) {
+    return 'Google Cloud quota bereikt. Probeer het later opnieuw.'
+  }
+  if (message.includes('PERMISSION_DENIED')) {
+    return 'Configuratiefout: geen toegang tot Document AI'
+  }
+  if (message.includes('NOT_FOUND')) {
+    return 'Document AI processor niet gevonden (configuratiefout)'
+  }
+  if (message.includes('DEADLINE_EXCEEDED') || message.includes('duurt te lang')) {
+    return 'PDF verwerking duurt te lang. Probeer een kleiner bestand.'
+  }
+
+  return 'Kan PDF niet verwerken. Controleer of het bestand geldig is.'
+}
+
 export async function extractTextFromPdf(
   fileBuffer: Buffer
 ): Promise<string> {
@@ -102,6 +127,8 @@ export async function extractTextFromPdf(
     } else {
       console.error("Document AI Error:", error.message, "Code:", error.code)
     }
-    throw error
+
+    const userMessage = getDocumentAIErrorMessage(error)
+    throw new Error(userMessage)
   }
 }
