@@ -9,17 +9,36 @@ npm run dev          # Start dev server at http://localhost:3000
 npm run build        # Production build
 npm run start        # Start production server
 npm run lint         # Run ESLint
+npm test             # Run Vitest tests
+npm test -- --ui     # Run tests with interactive UI
 ```
 
 ## Tech Stack
 
+### Core Framework
 - **Next.js 16.0.10** (App Router, React 18)
 - **TypeScript 5** (strict mode)
+- **React 18** (UI library)
+
+### Styling
 - **Tailwind CSS 3.4.1** (neo-brutalist custom theme)
+- **Lucide React 0.460.0** (icons)
+
+### External APIs
 - **Google Cloud Document AI 8.10.0** (PDF text extraction)
 - **Anthropic SDK 0.32.0** (Claude Sonnet 4 for field analysis)
-- **Zod 4.2.1** (environment variable validation)
-- **Lucide React 0.460.0** (icons)
+
+### Infrastructure
+- **Upstash Redis 1.35.8** (distributed rate limiting)
+- **Upstash Ratelimit 2.0.7** (rate limiting implementation)
+
+### Validation & Utilities
+- **Zod 4.2.1** (environment variable + API response validation)
+
+### Testing
+- **Vitest 4.0.16** (test runner with 17 tests across 4 suites)
+- **Testing Library React 16.3.1** (component testing)
+- **jsdom 27.3.0** / **happy-dom 20.0.11** (DOM emulation)
 
 ## Environment Setup
 
@@ -40,28 +59,35 @@ GOOGLE_CREDENTIALS_JSON={"type":"service_account",...full JSON...}
 # Anthropic Claude API (REQUIRED)
 ANTHROPIC_API_KEY=sk-ant-xxxxx
 
+# Upstash Redis (OPTIONAL - for distributed rate limiting)
+# If not provided, falls back to in-memory rate limiting
+# Both variables must be provided together or omitted together
+UPSTASH_REDIS_REST_URL=https://your-redis.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your-token
+
 # Optional
 DEBUG=true  # Enables detailed logging in document-ai.ts
 ```
 
-**Important:** Production deploys should use `GOOGLE_CREDENTIALS_JSON` (not file paths). Environment variables are validated with Zod schema in `lib/env.ts`.
+**Important:** Production deploys should use `GOOGLE_CREDENTIALS_JSON` (not file paths). Both Upstash variables must be provided together or omitted together. Environment variables are validated with Zod schema in `lib/env.ts`.
 
 ## Architecture
 
 This app validates Dutch freelancer (zzp'er) invoices against NL/EU tax requirements.
 
 **API Flow** (`app/api/check/route.ts`):
-1. **Rate Limiting** - `lib/rate-limit.ts` enforces 10 requests/min per IP (in-memory)
+1. **Rate Limiting** - `lib/rate-limit.ts` enforces 10 requests/min per IP using Upstash Redis (distributed, multi-instance safe) with automatic fallback to in-memory if Upstash not configured
 2. **File Validation** - PDF only, max 10MB
-3. **Text Extraction** - `lib/document-ai.ts` sends PDF to Google Document AI
-4. **Field Analysis** - `lib/claude.ts` uses Claude Sonnet 4 to identify 6 required invoice fields:
+3. **Text Size Validation** - Extracted text must be ≤100,000 characters to prevent token limit errors
+4. **Text Extraction** - `lib/document-ai.ts` sends PDF to Google Document AI (25-second timeout, user-friendly Dutch error messages)
+5. **Field Analysis** - `lib/claude.ts` uses Claude Sonnet 4 (model: `claude-sonnet-4-20250514`) to identify 6 required invoice fields with Zod validation and retry logic (1 retry on parse/validation failure, 20-second timeout):
    - factuurnummer (invoice number)
    - factuurdatum (invoice date)
    - leverancierNaam (vendor name)
    - btwNummer (VAT number)
    - klantNaam (customer name)
    - totaalbedrag (total amount)
-5. **Compliance Scoring** - `lib/compliance.ts` returns status:
+6. **Compliance Scoring** - `lib/compliance.ts` returns status:
    - Green: 0 missing fields (compliant)
    - Orange: 1-2 missing fields (warning)
    - Red: 3+ missing fields (not compliant)
@@ -78,9 +104,50 @@ This app validates Dutch freelancer (zzp'er) invoices against NL/EU tax requirem
 - `components/ui/card.tsx` - Reusable card with optional hover effect
 
 **Rate Limiting:**
-- In-memory implementation (single-instance only)
-- For multi-instance production: use Upstash, Redis, or Vercel Edge Config
+- Upstash Redis implementation (distributed, multi-instance safe)
+- Automatic fallback to in-memory if Upstash not configured (logs warning)
+- Sliding window: 10 requests per minute per IP
 - Returns headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
+- Configure via `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (optional)
+
+## Testing
+
+Test suite built with **Vitest 4.0.16** and **Testing Library**. Run tests with:
+
+```bash
+npm test              # Run all tests
+npm test -- --ui      # Open interactive test UI
+npm test -- --watch   # Watch mode
+```
+
+**Test Coverage (17 tests across 4 suites):**
+
+1. **`__tests__/lib/compliance.test.ts`** (5 tests)
+   - Green status (0 missing fields)
+   - Orange status (1-2 missing fields)
+   - Red status (3+ missing fields)
+
+2. **`__tests__/lib/rate-limit.test.ts`** (2 tests)
+   - Allowed requests within limit
+   - Blocked requests exceeding limit
+   - Mocks Upstash Redis
+
+3. **`__tests__/lib/timeout.test.ts`** (3 tests)
+   - Promise resolves before timeout
+   - Promise rejects on timeout
+   - Original error preserved
+
+4. **`__tests__/lib/claude.test.ts`** (7 tests)
+   - Valid Claude response parsing with Zod
+   - Retry on JSON parse failure
+   - Retry on Zod validation failure
+   - Error when both attempts fail
+   - Required fields validation
+   - Optional value field handling
+
+**Configuration:**
+- `vitest.config.ts` - jsdom environment, global test functions
+- `__tests__/setup.ts` - Testing Library matchers
 
 ## Design System
 
@@ -114,6 +181,9 @@ Neo-brutalism theme with bold black borders. Custom Tailwind classes in `tailwin
 - Strict TypeScript types throughout
 - Environment validation with Zod
 - PDF validation (type + size)
+- Text size validation (max 100,000 chars)
+- Zod validation of API responses from Claude
+- Timeout protection (25s Document AI, 20s Claude)
 - Rate limiting per IP
 
 ## Language
