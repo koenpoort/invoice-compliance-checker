@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk"
 import { env } from "./env"
+import { withTimeout } from "./timeout"
 
 const client = new Anthropic({
   apiKey: env.ANTHROPIC_API_KEY,
@@ -40,17 +41,21 @@ export async function analyzeInvoiceText(
   text: string
 ): Promise<ExtractedFields> {
 
-  const message = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 1024,
-    messages: [
-      {
-        role: "user",
-        content: `Analyseer deze factuur tekst en geef aan welke verplichte velden aanwezig zijn:\n\n${text}`,
-      },
-    ],
-    system: SYSTEM_PROMPT,
-  })
+  const message = await withTimeout(
+    client.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content: `Analyseer deze factuur tekst en geef aan welke verplichte velden aanwezig zijn:\n\n${text}`,
+        },
+      ],
+      system: SYSTEM_PROMPT,
+    }),
+    20000, // 20 seconds
+    'Analyse duurt te lang. Probeer het opnieuw.'
+  )
 
   const responseText =
     message.content[0].type === "text" ? message.content[0].text : ""

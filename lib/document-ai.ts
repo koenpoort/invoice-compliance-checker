@@ -1,6 +1,7 @@
 import { DocumentProcessorServiceClient } from "@google-cloud/documentai"
 import { readFileSync } from "fs"
 import { env } from "./env"
+import { withTimeout } from "./timeout"
 
 const projectId = env.GOOGLE_CLOUD_PROJECT_ID
 const location = env.GOOGLE_CLOUD_LOCATION
@@ -76,7 +77,11 @@ export async function extractTextFromPdf(
 
   try {
     if (DEBUG) console.log("Calling Document AI API...")
-    const [result] = await client.processDocument(request)
+    const [result] = await withTimeout(
+      client.processDocument(request),
+      25000, // 25 seconds
+      'PDF verwerking duurt te lang. Probeer een kleiner bestand.'
+    )
     const { document } = result
 
     if (!document?.text) {

@@ -87,10 +87,9 @@ export async function POST(request: NextRequest) {
       headers: rateLimitHeaders,
     })
   } catch (error) {
-    console.error("API Error:", error)
+    console.error('Error processing invoice:', error)
 
-    const message =
-      error instanceof Error ? error.message : "Er ging iets mis"
+    const message = error instanceof Error ? error.message : 'Er is een fout opgetreden'
 
     // Get rate limit headers for consistent error response format
     const ip = request.headers.get("x-forwarded-for") ?? "anonymous"
