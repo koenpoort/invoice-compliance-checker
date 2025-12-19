@@ -3,18 +3,64 @@
 @tailwind utilities;
 
 @layer base {
+  /* Focus visible for keyboard navigation - critical for accessibility */
+  :focus-visible {
+    @apply outline-none ring-4 ring-neo-muted ring-offset-2 ring-offset-neo-bg;
+  }
+
+  /* Remove default focus for mouse users */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
   body {
     @apply text-neo-fg antialiased;
     background-color: #FFFDF5;
-    background-image: radial-gradient(circle, rgba(0, 0, 0, 0.25) 2px, transparent 2px);
+    background-image: radial-gradient(circle, rgba(0, 0, 0, 0.15) 1.5px, transparent 1.5px);
     background-size: 24px 24px;
+  }
+
+  /* Improve text rendering */
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Selection styling */
+  ::selection {
+    @apply bg-neo-secondary text-neo-fg;
+  }
+
+  /* Scrollbar styling for webkit browsers */
+  ::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-neo-bg border-l-4 border-neo-fg;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-neo-fg;
   }
 }
 
 @layer components {
+  /* Skip link for keyboard navigation - critical for accessibility */
+  .skip-link {
+    @apply absolute -top-full left-4 z-50 px-4 py-2 bg-neo-fg text-neo-bg font-bold uppercase;
+    @apply focus:top-4 transition-all;
+  }
+
   /* Neo-brutalist button push effect */
   .neo-btn {
-    @apply border-4 border-black font-bold uppercase tracking-wide transition-all duration-100;
+    @apply border-4 border-neo-fg font-bold uppercase tracking-wide transition-all duration-100;
+    @apply focus-visible:ring-4 focus-visible:ring-neo-muted focus-visible:ring-offset-2;
+  }
+
+  .neo-btn:hover {
+    @apply -translate-y-0.5;
   }
 
   .neo-btn:active {
@@ -23,7 +69,8 @@
 
   /* Neo-brutalist card lift effect */
   .neo-card {
-    @apply border-4 border-black bg-white transition-all duration-200;
+    @apply border-4 border-neo-fg bg-neo-surface transition-all duration-200;
+    @apply focus-within:ring-4 focus-within:ring-neo-muted focus-within:ring-offset-2;
   }
 
   .neo-card:hover {
@@ -32,39 +79,159 @@
 
   /* Text stroke effect for display text */
   .text-stroke {
-    -webkit-text-stroke: 2px black;
+    -webkit-text-stroke: 2px #0D0D0D;
     color: transparent;
   }
 
   .text-stroke-sm {
-    -webkit-text-stroke: 1px black;
+    -webkit-text-stroke: 1px #0D0D0D;
     color: transparent;
+  }
+
+  /* Brutalist tag/badge */
+  .neo-tag {
+    @apply inline-block px-3 py-1 border-2 border-neo-fg font-bold text-sm uppercase tracking-wider;
+  }
+
+  /* Animated underline for links */
+  .neo-link {
+    @apply relative inline-block font-bold;
+  }
+
+  .neo-link::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-full h-1 bg-neo-secondary transform scale-x-0 origin-left transition-transform duration-200;
+  }
+
+  .neo-link:hover::after {
+    @apply scale-x-100;
+  }
+
+  /* Marquee container */
+  .neo-marquee {
+    @apply overflow-hidden whitespace-nowrap;
+  }
+
+  .neo-marquee-content {
+    @apply inline-block animate-[marquee_20s_linear_infinite];
+  }
+
+  /* Trust badge */
+  .trust-badge {
+    @apply inline-flex items-center gap-2 px-4 py-2 border-4 border-neo-fg bg-neo-surface font-bold uppercase text-sm;
+    @apply shadow-neo-sm hover:shadow-neo-md hover:-translate-y-0.5 transition-all duration-200;
+  }
+
+  /* Testimonial card */
+  .testimonial-card {
+    @apply relative border-4 border-neo-fg bg-neo-surface p-6 shadow-neo-md;
+  }
+
+  .testimonial-card::before {
+    content: '"';
+    @apply absolute -top-4 -left-2 text-6xl font-bold text-neo-secondary;
   }
 }
 
 @layer utilities {
+  /* Screen reader only - visually hidden but accessible */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Make sr-only content visible on focus */
+  .sr-only-focusable:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: inherit;
+    margin: inherit;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
   /* Halftone pattern background */
   .bg-halftone {
-    background-image: radial-gradient(#000 1.5px, transparent 1.5px);
+    background-image: radial-gradient(#0D0D0D 1.5px, transparent 1.5px);
     background-size: 20px 20px;
   }
 
   /* Grid pattern background */
   .bg-grid {
     background-size: 40px 40px;
-    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.1) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+    background-image: linear-gradient(to right, rgba(13, 13, 13, 0.08) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(13, 13, 13, 0.08) 1px, transparent 1px);
   }
 
   /* Noise texture background */
   .bg-noise {
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
   }
+
+  /* Diagonal stripes */
+  .bg-stripes {
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(13, 13, 13, 0.05) 10px,
+      rgba(13, 13, 13, 0.05) 20px
+    );
+  }
+
+  /* High contrast mode support */
+  @media (forced-colors: active) {
+    .neo-btn,
+    .neo-card {
+      border: 2px solid currentColor;
+    }
+  }
 }
 
-/* Reduced motion preferences */
+/* Reduced motion preferences - critical for accessibility */
 @media (prefers-reduced-motion: reduce) {
-  .animate-spin-slow {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .neo-marquee-content {
     animation: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  body {
+    background: white !important;
+  }
+
+  .neo-btn,
+  .neo-card {
+    box-shadow: none !important;
+    border-color: black !important;
+  }
+}
+
+/* Marquee animation */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
   }
 }

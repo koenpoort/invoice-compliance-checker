@@ -4,42 +4,46 @@ import { forwardRef, HTMLAttributes } from "react"
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   hover?: boolean
+  as?: "div" | "article" | "section" | "aside"
 }
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className = "", hover = true, children, ...props }, ref) => {
+  ({ className = "", hover = true, as: Component = "div", children, ...props }, ref) => {
     return (
-      <div
+      <Component
         ref={ref}
         className={`
-          border-4 border-black bg-white shadow-neo-md
+          border-4 border-neo-fg bg-neo-surface shadow-neo-md
           ${hover ? "transition-all duration-200 hover:-translate-y-1 hover:shadow-neo-lg" : ""}
           ${className}
         `}
         {...props}
       >
         {children}
-      </div>
+      </Component>
     )
   }
 )
 
 Card.displayName = "Card"
 
-export const CardHeader = forwardRef<
-  HTMLDivElement,
-  HTMLAttributes<HTMLDivElement>
->(({ className = "", children, ...props }, ref) => {
-  return (
-    <div
-      ref={ref}
-      className={`border-b-4 border-black p-6 ${className}`}
-      {...props}
-    >
-      {children}
-    </div>
-  )
-})
+interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
+  as?: "div" | "header"
+}
+
+export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
+  ({ className = "", as: Component = "div", children, ...props }, ref) => {
+    return (
+      <Component
+        ref={ref}
+        className={`border-b-4 border-neo-fg p-6 ${className}`}
+        {...props}
+      >
+        {children}
+      </Component>
+    )
+  }
+)
 
 CardHeader.displayName = "CardHeader"
 
@@ -55,3 +59,23 @@ export const CardContent = forwardRef<
 })
 
 CardContent.displayName = "CardContent"
+
+interface CardFooterProps extends HTMLAttributes<HTMLDivElement> {
+  as?: "div" | "footer"
+}
+
+export const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
+  ({ className = "", as: Component = "div", children, ...props }, ref) => {
+    return (
+      <Component
+        ref={ref}
+        className={`border-t-4 border-neo-fg p-6 ${className}`}
+        {...props}
+      >
+        {children}
+      </Component>
+    )
+  }
+)
+
+CardFooter.displayName = "CardFooter"
