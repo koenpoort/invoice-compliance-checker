@@ -36,7 +36,7 @@ npm test -- --ui     # Run tests with interactive UI
 - **Zod 4.2.1** (environment variable + API response validation)
 
 ### Testing
-- **Vitest 4.0.16** (test runner with 17 tests across 4 suites)
+- **Vitest 4.0.16** (test runner with 125 tests across 11 suites)
 - **Testing Library React 16.3.1** (component testing)
 - **jsdom 27.3.0** / **happy-dom 20.0.11** (DOM emulation)
 
@@ -120,7 +120,9 @@ npm test -- --ui      # Open interactive test UI
 npm test -- --watch   # Watch mode
 ```
 
-**Test Coverage (17 tests across 4 suites):**
+**Test Coverage (125 tests across 11 suites):**
+
+### Library Tests (30 tests)
 
 1. **`__tests__/lib/compliance.test.ts`** (5 tests)
    - Green status (0 missing fields)
@@ -130,23 +132,42 @@ npm test -- --watch   # Watch mode
 2. **`__tests__/lib/rate-limit.test.ts`** (2 tests)
    - Allowed requests within limit
    - Blocked requests exceeding limit
-   - Mocks Upstash Redis
 
-3. **`__tests__/lib/timeout.test.ts`** (3 tests)
+3. **`__tests__/lib/rate-limit-fallback.test.ts`** (4 tests)
+   - Fallback mode when Upstash not configured
+   - Correct fallback values
+   - Warning logging
+   - Header generation
+
+4. **`__tests__/lib/timeout.test.ts`** (3 tests)
    - Promise resolves before timeout
    - Promise rejects on timeout
    - Original error preserved
 
-4. **`__tests__/lib/claude.test.ts`** (7 tests)
+5. **`__tests__/lib/claude.test.ts`** (6 tests)
    - Valid Claude response parsing with Zod
    - Retry on JSON parse failure
    - Retry on Zod validation failure
    - Error when both attempts fail
    - Required fields validation
-   - Optional value field handling
+
+6. **`__tests__/lib/document-ai.test.ts`** (10 tests)
+   - Text extraction from valid PDF
+   - Error handling for empty responses
+   - Dutch error message mapping (INVALID_ARGUMENT, RESOURCE_EXHAUSTED, PERMISSION_DENIED, NOT_FOUND, DEADLINE_EXCEEDED)
+   - Generic error fallback
+
+### Component Tests (95 tests)
+
+7. **`__tests__/components/button.test.tsx`** (21 tests)
+8. **`__tests__/components/card.test.tsx`** (26 tests)
+9. **`__tests__/components/loading-state.test.tsx`** (8 tests)
+10. **`__tests__/components/upload-zone.test.tsx`** (20 tests)
+11. **`__tests__/components/result-display.test.tsx`** (20 tests)
 
 **Configuration:**
 - `vitest.config.ts` - jsdom environment, global test functions
+- `eslint.config.mjs` - ESLint 9 flat config
 - `__tests__/setup.ts` - Testing Library matchers
 
 ## Design System
@@ -189,3 +210,17 @@ Neo-brutalism theme with bold black borders. Custom Tailwind classes in `tailwin
 ## Language
 
 All UI text and Claude prompts are in Dutch.
+
+## ESLint
+
+Uses ESLint 9 with flat config (`eslint.config.mjs`):
+
+```bash
+npm run lint          # Run ESLint
+```
+
+Key rules:
+- TypeScript strict mode with unused var warnings
+- React hooks rules enforced
+- Console statements allowed (for DEBUG logging)
+- Test files excluded from linting

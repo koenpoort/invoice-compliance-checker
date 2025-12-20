@@ -361,8 +361,8 @@ export default function Home() {
                     Statistieken en reviews
                   </h2>
 
-                  {/* Stats */}
-                  <div className="border-4 border-neo-fg bg-neo-surface shadow-neo-lg p-6 md:p-8 mb-12 rotate-1">
+                  {/* Stats (illustrative examples) */}
+                  <div className="border-4 border-neo-fg bg-neo-surface shadow-neo-lg p-6 md:p-8 mb-4 rotate-1">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                       <AnimatedCounter target={12847} label="Facturen gecheckt" />
                       <AnimatedCounter target={98} label="% Tevreden" />
@@ -370,9 +370,12 @@ export default function Home() {
                       <AnimatedCounter target={30} label="Sec gemiddeld" />
                     </div>
                   </div>
+                  <p className="text-xs text-neo-fg/50 text-center mb-12 italic">
+                    * Illustratieve voorbeeldcijfers
+                  </p>
 
-                  {/* Testimonials */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                  {/* Testimonials (illustrative examples) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-4">
                     <Testimonial
                       quote="Eindelijk zekerheid dat mijn facturen compleet zijn. Scheelt me zoveel stress!"
                       author="Maria V."
@@ -386,6 +389,9 @@ export default function Home() {
                       rotation="rotate-2"
                     />
                   </div>
+                  <p className="text-xs text-neo-fg/50 text-center italic">
+                    * Voorbeeldquotes ter illustratie
+                  </p>
                 </section>
 
                 {/* CTA section */}

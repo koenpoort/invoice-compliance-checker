@@ -116,7 +116,7 @@ export async function analyzeInvoiceText(
       const retryFields = ExtractedFieldsSchema.parse(retryParsed)
 
       return retryFields as ExtractedFields
-    } catch (retryError) {
+    } catch (_retryError) {
       throw new Error('Kan factuur niet analyseren. Probeer het opnieuw.')
     }
   }

@@ -115,17 +115,20 @@ export async function extractTextFromPdf(
 
     if (DEBUG) console.log("Text extraction successful, length:", document.text.length)
     return document.text
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Always log errors, but limit detail in production
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    const errorCode = (error as { code?: string })?.code
+
     if (DEBUG) {
       console.error("Document AI Error Details:", {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        metadata: error.metadata,
+        message: errorMessage,
+        code: errorCode,
+        details: (error as { details?: unknown })?.details,
+        metadata: (error as { metadata?: unknown })?.metadata,
       })
     } else {
-      console.error("Document AI Error:", error.message, "Code:", error.code)
+      console.error("Document AI Error:", errorMessage, "Code:", errorCode)
     }
 
     const userMessage = getDocumentAIErrorMessage(error)

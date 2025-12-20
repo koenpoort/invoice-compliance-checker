@@ -8,11 +8,14 @@ export const runtime = "nodejs"
 export const maxDuration = 60 // seconds
 
 export async function POST(request: NextRequest) {
+  // Cache rate limit headers for reuse in error handler (prevents double counting)
+  let rateLimitHeaders: Record<string, string> = {}
+
   try {
     // Rate limiting: 10 requests per minute per IP
     const ip = request.headers.get("x-forwarded-for") ?? "anonymous"
     const rateLimitResult = await checkRateLimit(ip)
-    const rateLimitHeaders = getRateLimitHeaders(rateLimitResult)
+    rateLimitHeaders = getRateLimitHeaders(rateLimitResult)
 
     if (!rateLimitResult.allowed) {
       return NextResponse.json(
@@ -107,11 +110,7 @@ export async function POST(request: NextRequest) {
 
     const message = error instanceof Error ? error.message : 'Er is een fout opgetreden'
 
-    // Get rate limit headers for consistent error response format
-    const ip = request.headers.get("x-forwarded-for") ?? "anonymous"
-    const rateLimitResult = await checkRateLimit(ip)
-    const rateLimitHeaders = getRateLimitHeaders(rateLimitResult)
-
+    // Reuse cached rate limit headers (don't call checkRateLimit again)
     return NextResponse.json(
       { error: message },
       {
