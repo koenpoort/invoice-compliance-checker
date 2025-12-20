@@ -79,6 +79,38 @@ const fieldLabels: Record<string, { label: string; description: string }> = {
     label: "Totaalbedrag",
     description: "Het totale factuurbedrag inclusief BTW",
   },
+  kvkNummer: {
+    label: "KVK-nummer",
+    description: "Kamer van Koophandel nummer",
+  },
+  leverancierAdres: {
+    label: "Adres leverancier",
+    description: "Volledig vestigingsadres",
+  },
+  klantAdres: {
+    label: "Adres klant",
+    description: "Volledig adres klant",
+  },
+  omschrijving: {
+    label: "Omschrijving",
+    description: "Goederen/diensten met hoeveelheid",
+  },
+  leveringsdatum: {
+    label: "Leveringsdatum",
+    description: "Datum van levering",
+  },
+  bedragExclBtw: {
+    label: "Bedrag excl. BTW",
+    description: "Nettobedrag voor belasting",
+  },
+  btwTarief: {
+    label: "BTW-tarief",
+    description: "Toegepast percentage (0%, 9%, 21%)",
+  },
+  btwBedrag: {
+    label: "BTW-bedrag",
+    description: "Berekende belasting",
+  },
 }
 
 // Confetti component for celebration

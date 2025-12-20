@@ -11,6 +11,15 @@ export interface ComplianceResult {
   fields: FieldResult[]
 }
 
+// Helper to format address as display value
+function formatAddress(addr: { street?: string; houseNumber?: string; postalCode?: string; city?: string }): string | undefined {
+  const parts = [
+    addr.street && addr.houseNumber ? `${addr.street} ${addr.houseNumber}` : addr.street,
+    addr.postalCode && addr.city ? `${addr.postalCode} ${addr.city}` : addr.postalCode || addr.city,
+  ].filter(Boolean)
+  return parts.length > 0 ? parts.join(", ") : undefined
+}
+
 export function calculateCompliance(fields: ExtractedFields): ComplianceResult {
   const fieldResults: FieldResult[] = [
     {
@@ -42,6 +51,46 @@ export function calculateCompliance(fields: ExtractedFields): ComplianceResult {
       name: "totaalbedrag",
       found: fields.totaalbedrag.found,
       value: fields.totaalbedrag.value,
+    },
+    {
+      name: "kvkNummer",
+      found: fields.kvkNummer.found,
+      value: fields.kvkNummer.value,
+    },
+    {
+      name: "leverancierAdres",
+      found: fields.leverancierAdres.complete,
+      value: formatAddress(fields.leverancierAdres),
+    },
+    {
+      name: "klantAdres",
+      found: fields.klantAdres.complete,
+      value: formatAddress(fields.klantAdres),
+    },
+    {
+      name: "omschrijving",
+      found: fields.omschrijving.found,
+      value: fields.omschrijving.value,
+    },
+    {
+      name: "leveringsdatum",
+      found: fields.leveringsdatum.found,
+      value: fields.leveringsdatum.value,
+    },
+    {
+      name: "bedragExclBtw",
+      found: fields.bedragExclBtw.found,
+      value: fields.bedragExclBtw.value,
+    },
+    {
+      name: "btwTarief",
+      found: fields.btwTarief.found,
+      value: fields.btwTarief.value,
+    },
+    {
+      name: "btwBedrag",
+      found: fields.btwBedrag.found,
+      value: fields.btwBedrag.value,
     },
   ]
 

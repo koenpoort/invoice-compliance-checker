@@ -13,14 +13,42 @@ const FieldSchema = z.object({
   value: z.string().optional(),
 })
 
+const AddressSchema = z.object({
+  found: z.boolean(),
+  street: z.string().optional(),
+  houseNumber: z.string().optional(),
+  postalCode: z.string().optional(),
+  city: z.string().optional(),
+  complete: z.boolean(),
+})
+
 const ExtractedFieldsSchema = z.object({
+  // Existing fields
   factuurnummer: FieldSchema,
   factuurdatum: FieldSchema,
   leverancierNaam: FieldSchema,
   btwNummer: FieldSchema,
   klantNaam: FieldSchema,
   totaalbedrag: FieldSchema,
+  // New fields
+  kvkNummer: FieldSchema,
+  leverancierAdres: AddressSchema,
+  klantAdres: AddressSchema,
+  omschrijving: FieldSchema,
+  leveringsdatum: FieldSchema,
+  bedragExclBtw: FieldSchema,
+  btwTarief: FieldSchema,
+  btwBedrag: FieldSchema,
 })
+
+export interface Address {
+  found: boolean
+  street?: string
+  houseNumber?: string
+  postalCode?: string
+  city?: string
+  complete: boolean
+}
 
 export interface ExtractedFields {
   factuurnummer: { found: boolean; value?: string }
@@ -29,6 +57,14 @@ export interface ExtractedFields {
   btwNummer: { found: boolean; value?: string }
   klantNaam: { found: boolean; value?: string }
   totaalbedrag: { found: boolean; value?: string }
+  kvkNummer: { found: boolean; value?: string }
+  leverancierAdres: Address
+  klantAdres: Address
+  omschrijving: { found: boolean; value?: string }
+  leveringsdatum: { found: boolean; value?: string }
+  bedragExclBtw: { found: boolean; value?: string }
+  btwTarief: { found: boolean; value?: string }
+  btwBedrag: { found: boolean; value?: string }
 }
 
 const SYSTEM_PROMPT = `Je bent een Nederlandse factuur-analyzer. Je taak is om te controleren of bepaalde verplichte velden aanwezig zijn in de factuur tekst.
@@ -40,6 +76,16 @@ Analyseer de gegeven factuur tekst en bepaal of de volgende velden aanwezig zijn
 4. btwNummer - Het BTW-nummer (format: NL + 9 cijfers + B + 2 cijfers, of vergelijkbaar EU formaat)
 5. klantNaam - De naam van de klant/koper
 6. totaalbedrag - Het totaalbedrag van de factuur
+7. kvkNummer - KVK-nummer (8 cijfers)
+8. leverancierAdres - Volledig adres van de leverancier: straat, huisnummer, postcode, plaats
+9. klantAdres - Volledig adres van de klant: straat, huisnummer, postcode, plaats
+10. omschrijving - Omschrijving van geleverde goederen/diensten met hoeveelheid
+11. leveringsdatum - Datum van levering (mag gelijk zijn aan factuurdatum)
+12. bedragExclBtw - Bedrag exclusief BTW
+13. btwTarief - BTW-tarief (0%, 9%, of 21%)
+14. btwBedrag - BTW-bedrag
+
+Voor adressen: een adres is alleen "complete": true als ALLE onderdelen aanwezig zijn (straat, huisnummer, postcode, plaats). Een postbus alleen is NIET voldoende.
 
 Geef je antwoord als JSON in exact dit formaat:
 {
@@ -48,7 +94,15 @@ Geef je antwoord als JSON in exact dit formaat:
   "leverancierNaam": { "found": true/false, "value": "waarde indien gevonden" },
   "btwNummer": { "found": true/false, "value": "waarde indien gevonden" },
   "klantNaam": { "found": true/false, "value": "waarde indien gevonden" },
-  "totaalbedrag": { "found": true/false, "value": "waarde indien gevonden" }
+  "totaalbedrag": { "found": true/false, "value": "waarde indien gevonden" },
+  "kvkNummer": { "found": true/false, "value": "waarde indien gevonden" },
+  "leverancierAdres": { "found": true/false, "street": "straat", "houseNumber": "nummer", "postalCode": "postcode", "city": "plaats", "complete": true/false },
+  "klantAdres": { "found": true/false, "street": "straat", "houseNumber": "nummer", "postalCode": "postcode", "city": "plaats", "complete": true/false },
+  "omschrijving": { "found": true/false, "value": "waarde indien gevonden" },
+  "leveringsdatum": { "found": true/false, "value": "waarde indien gevonden" },
+  "bedragExclBtw": { "found": true/false, "value": "waarde indien gevonden" },
+  "btwTarief": { "found": true/false, "value": "waarde indien gevonden" },
+  "btwBedrag": { "found": true/false, "value": "waarde indien gevonden" }
 }
 
 Wees streng: markeer een veld alleen als "found": true als je er zeker van bent dat het veld daadwerkelijk aanwezig is.`

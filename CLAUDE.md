@@ -36,7 +36,7 @@ npm test -- --ui     # Run tests with interactive UI
 - **Zod 4.2.1** (environment variable + API response validation)
 
 ### Testing
-- **Vitest 4.0.16** (test runner with 125 tests across 11 suites)
+- **Vitest 4.0.16** (test runner with 130 tests across 11 suites)
 - **Testing Library React 16.3.1** (component testing)
 - **jsdom 27.3.0** / **happy-dom 20.0.11** (DOM emulation)
 
@@ -80,13 +80,21 @@ This app validates Dutch freelancer (zzp'er) invoices against NL/EU tax requirem
 2. **File Validation** - PDF only, max 10MB
 3. **Text Size Validation** - Extracted text must be ≤100,000 characters to prevent token limit errors
 4. **Text Extraction** - `lib/document-ai.ts` sends PDF to Google Document AI (25-second timeout, user-friendly Dutch error messages)
-5. **Field Analysis** - `lib/claude.ts` uses Claude Sonnet 4 (model: `claude-sonnet-4-20250514`) to identify 6 required invoice fields with Zod validation and retry logic (1 retry on parse/validation failure, 20-second timeout):
+5. **Field Analysis** - `lib/claude.ts` uses Claude Sonnet 4 (model: `claude-sonnet-4-20250514`) to identify 14 required invoice fields with Zod validation and retry logic (1 retry on parse/validation failure, 20-second timeout):
    - factuurnummer (invoice number)
    - factuurdatum (invoice date)
    - leverancierNaam (vendor name)
    - btwNummer (VAT number)
    - klantNaam (customer name)
    - totaalbedrag (total amount)
+   - kvkNummer (KVK/Chamber of Commerce number)
+   - leverancierAdres (vendor address - must be complete: street, number, postal code, city)
+   - klantAdres (customer address - must be complete)
+   - omschrijving (description of goods/services with quantity)
+   - leveringsdatum (delivery date)
+   - bedragExclBtw (amount excluding VAT)
+   - btwTarief (VAT rate: 0%, 9%, or 21%)
+   - btwBedrag (VAT amount)
 6. **Compliance Scoring** - `lib/compliance.ts` returns status:
    - Green: 0 missing fields (compliant)
    - Orange: 1-2 missing fields (warning)
@@ -120,11 +128,11 @@ npm test -- --ui      # Open interactive test UI
 npm test -- --watch   # Watch mode
 ```
 
-**Test Coverage (125 tests across 11 suites):**
+**Test Coverage (130 tests across 11 suites):**
 
-### Library Tests (30 tests)
+### Library Tests (35 tests)
 
-1. **`__tests__/lib/compliance.test.ts`** (5 tests)
+1. **`__tests__/lib/compliance.test.ts`** (8 tests)
    - Green status (0 missing fields)
    - Orange status (1-2 missing fields)
    - Red status (3+ missing fields)
@@ -144,12 +152,14 @@ npm test -- --watch   # Watch mode
    - Promise rejects on timeout
    - Original error preserved
 
-5. **`__tests__/lib/claude.test.ts`** (6 tests)
+5. **`__tests__/lib/claude.test.ts`** (8 tests)
    - Valid Claude response parsing with Zod
    - Retry on JSON parse failure
    - Retry on Zod validation failure
    - Error when both attempts fail
    - Required fields validation
+   - Address field parsing
+   - Incomplete address handling
 
 6. **`__tests__/lib/document-ai.test.ts`** (10 tests)
    - Text extraction from valid PDF
@@ -157,7 +167,7 @@ npm test -- --watch   # Watch mode
    - Dutch error message mapping (INVALID_ARGUMENT, RESOURCE_EXHAUSTED, PERMISSION_DENIED, NOT_FOUND, DEADLINE_EXCEEDED)
    - Generic error fallback
 
-### Component Tests (95 tests)
+### Component Tests (95 tests, updated test data for 14 fields)
 
 7. **`__tests__/components/button.test.tsx`** (21 tests)
 8. **`__tests__/components/card.test.tsx`** (26 tests)

@@ -14,6 +14,14 @@ describe('ResultDisplay', () => {
       { name: 'btwNummer', found: true, value: 'NL123456789B01' },
       { name: 'klantNaam', found: true, value: 'Klant BV' },
       { name: 'totaalbedrag', found: true, value: '€1,000.00' },
+      { name: 'kvkNummer', found: true, value: '12345678' },
+      { name: 'leverancierAdres', found: true, value: 'Teststraat 1, 1234AB Amsterdam' },
+      { name: 'klantAdres', found: true, value: 'Klantweg 2, 5678CD Rotterdam' },
+      { name: 'omschrijving', found: true, value: 'Consulting diensten' },
+      { name: 'leveringsdatum', found: true, value: '2024-01-10' },
+      { name: 'bedragExclBtw', found: true, value: '€826.45' },
+      { name: 'btwTarief', found: true, value: '21%' },
+      { name: 'btwBedrag', found: true, value: '€173.55' },
     ],
   }
 
@@ -26,6 +34,14 @@ describe('ResultDisplay', () => {
       { name: 'btwNummer', found: false },
       { name: 'klantNaam', found: true, value: 'Klant BV' },
       { name: 'totaalbedrag', found: true, value: '€1,000.00' },
+      { name: 'kvkNummer', found: true, value: '12345678' },
+      { name: 'leverancierAdres', found: true, value: 'Teststraat 1, 1234AB Amsterdam' },
+      { name: 'klantAdres', found: true, value: 'Klantweg 2, 5678CD Rotterdam' },
+      { name: 'omschrijving', found: true, value: 'Consulting diensten' },
+      { name: 'leveringsdatum', found: true, value: '2024-01-10' },
+      { name: 'bedragExclBtw', found: true, value: '€826.45' },
+      { name: 'btwTarief', found: true, value: '21%' },
+      { name: 'btwBedrag', found: true, value: '€173.55' },
     ],
   }
 
@@ -38,6 +54,14 @@ describe('ResultDisplay', () => {
       { name: 'btwNummer', found: false },
       { name: 'klantNaam', found: true, value: 'Klant BV' },
       { name: 'totaalbedrag', found: true, value: '€1,000.00' },
+      { name: 'kvkNummer', found: true, value: '12345678' },
+      { name: 'leverancierAdres', found: true, value: 'Teststraat 1, 1234AB Amsterdam' },
+      { name: 'klantAdres', found: true, value: 'Klantweg 2, 5678CD Rotterdam' },
+      { name: 'omschrijving', found: true, value: 'Consulting diensten' },
+      { name: 'leveringsdatum', found: true, value: '2024-01-10' },
+      { name: 'bedragExclBtw', found: true, value: '€826.45' },
+      { name: 'btwTarief', found: true, value: '21%' },
+      { name: 'btwBedrag', found: true, value: '€173.55' },
     ],
   }
 
@@ -91,12 +115,22 @@ describe('ResultDisplay', () => {
   describe('field checklist', () => {
     it('displays all field labels', () => {
       render(<ResultDisplay result={greenResult} onReset={mockOnReset} />)
+      // Original 6 fields
       expect(screen.getByText('Factuurnummer')).toBeInTheDocument()
       expect(screen.getByText('Factuurdatum')).toBeInTheDocument()
       expect(screen.getByText('Naam leverancier')).toBeInTheDocument()
       expect(screen.getByText('BTW-nummer')).toBeInTheDocument()
       expect(screen.getByText('Naam klant')).toBeInTheDocument()
       expect(screen.getByText('Totaalbedrag')).toBeInTheDocument()
+      // New 8 fields
+      expect(screen.getByText('KVK-nummer')).toBeInTheDocument()
+      expect(screen.getByText('Adres leverancier')).toBeInTheDocument()
+      expect(screen.getByText('Adres klant')).toBeInTheDocument()
+      expect(screen.getByText('Omschrijving')).toBeInTheDocument()
+      expect(screen.getByText('Leveringsdatum')).toBeInTheDocument()
+      expect(screen.getByText('Bedrag excl. BTW')).toBeInTheDocument()
+      expect(screen.getByText('BTW-tarief')).toBeInTheDocument()
+      expect(screen.getByText('BTW-bedrag')).toBeInTheDocument()
     })
 
     it('displays field values when available', () => {
@@ -110,18 +144,18 @@ describe('ResultDisplay', () => {
       const list = screen.getByRole('list', { name: /controlelijst/i })
       expect(list).toBeInTheDocument()
       const listItems = screen.getAllByRole('listitem')
-      expect(listItems).toHaveLength(6)
+      expect(listItems).toHaveLength(14)
     })
 
     it('shows correct count of found fields for green', () => {
       render(<ResultDisplay result={greenResult} onReset={mockOnReset} />)
-      expect(screen.getByText('6')).toBeInTheDocument()
-      expect(screen.getByText('/6')).toBeInTheDocument()
+      expect(screen.getByText('14')).toBeInTheDocument()
+      expect(screen.getByText('/14')).toBeInTheDocument()
     })
 
     it('shows correct count of found fields for red', () => {
       render(<ResultDisplay result={redResult} onReset={mockOnReset} />)
-      expect(screen.getByText('2')).toBeInTheDocument()
+      expect(screen.getByText('10')).toBeInTheDocument()
     })
   })
 
