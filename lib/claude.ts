@@ -107,6 +107,17 @@ Geef je antwoord als JSON in exact dit formaat:
 
 Wees streng: markeer een veld alleen als "found": true als je er zeker van bent dat het veld daadwerkelijk aanwezig is.`
 
+/**
+ * Strip markdown code fences from Claude response.
+ * Claude sometimes wraps JSON in ```json ... ``` blocks.
+ */
+function stripMarkdownCodeFence(text: string): string {
+  const trimmed = text.trim()
+  // Match ```json or ``` at start and ``` at end
+  const match = trimmed.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?```$/i)
+  return match ? match[1].trim() : trimmed
+}
+
 export async function analyzeInvoiceText(
   text: string
 ): Promise<ExtractedFields> {
@@ -132,8 +143,9 @@ export async function analyzeInvoiceText(
 
   // Parse and validate response with Zod
   try {
-    // Parse JSON
-    const parsed = JSON.parse(responseText)
+    // Strip markdown code fences and parse JSON
+    const cleanedResponse = stripMarkdownCodeFence(responseText)
+    const parsed = JSON.parse(cleanedResponse)
 
     // Validate with Zod
     const fields = ExtractedFieldsSchema.parse(parsed)
@@ -166,7 +178,8 @@ export async function analyzeInvoiceText(
       const retryContent = retryResponse.content[0].type === "text"
         ? retryResponse.content[0].text
         : ""
-      const retryParsed = JSON.parse(retryContent)
+      const cleanedRetryContent = stripMarkdownCodeFence(retryContent)
+      const retryParsed = JSON.parse(cleanedRetryContent)
       const retryFields = ExtractedFieldsSchema.parse(retryParsed)
 
       return retryFields as ExtractedFields

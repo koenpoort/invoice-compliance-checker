@@ -206,6 +206,40 @@ describe('analyzeInvoiceText', () => {
     expect(result.leverancierAdres.city).toBe('Amsterdam')
   })
 
+  it('strips markdown code fences from Claude response', async () => {
+    const markdownWrappedResponse = {
+      content: [
+        {
+          type: 'text',
+          text: '```json\n' + JSON.stringify({
+            factuurnummer: { found: true, value: 'INV-001' },
+            factuurdatum: { found: true, value: '2025-01-15' },
+            leverancierNaam: { found: true, value: 'Test BV' },
+            btwNummer: { found: true, value: 'NL123456789B01' },
+            klantNaam: { found: true, value: 'Klant BV' },
+            totaalbedrag: { found: true, value: '€1000' },
+            kvkNummer: { found: true, value: '12345678' },
+            leverancierAdres: { found: true, street: 'Teststraat', houseNumber: '1', postalCode: '1234AB', city: 'Amsterdam', complete: true },
+            klantAdres: { found: true, street: 'Klantweg', houseNumber: '2', postalCode: '5678CD', city: 'Rotterdam', complete: true },
+            omschrijving: { found: true, value: 'Consulting diensten, 10 uur' },
+            leveringsdatum: { found: true, value: '2025-01-10' },
+            bedragExclBtw: { found: true, value: '€826.45' },
+            btwTarief: { found: true, value: '21%' },
+            btwBedrag: { found: true, value: '€173.55' },
+          }) + '\n```',
+        },
+      ],
+    }
+
+    mockMessagesCreate.mockResolvedValue(markdownWrappedResponse)
+
+    const result = await analyzeInvoiceText('Sample invoice text')
+
+    expect(result.factuurnummer.found).toBe(true)
+    expect(result.factuurnummer.value).toBe('INV-001')
+    expect(mockMessagesCreate).toHaveBeenCalledTimes(1)
+  })
+
   it('handles incomplete address correctly', async () => {
     const incompleteAddressResponse = {
       content: [

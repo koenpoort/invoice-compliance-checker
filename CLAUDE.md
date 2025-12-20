@@ -36,7 +36,7 @@ npm test -- --ui     # Run tests with interactive UI
 - **Zod 4.2.1** (environment variable + API response validation)
 
 ### Testing
-- **Vitest 4.0.16** (test runner with 130 tests across 11 suites)
+- **Vitest 4.0.16** (test runner with 131 tests across 11 suites)
 - **Testing Library React 16.3.1** (component testing)
 - **jsdom 27.3.0** / **happy-dom 20.0.11** (DOM emulation)
 
@@ -80,7 +80,7 @@ This app validates Dutch freelancer (zzp'er) invoices against NL/EU tax requirem
 2. **File Validation** - PDF only, max 10MB
 3. **Text Size Validation** - Extracted text must be ≤100,000 characters to prevent token limit errors
 4. **Text Extraction** - `lib/document-ai.ts` sends PDF to Google Document AI (25-second timeout, user-friendly Dutch error messages)
-5. **Field Analysis** - `lib/claude.ts` uses Claude Sonnet 4 (model: `claude-sonnet-4-20250514`) to identify 14 required invoice fields with Zod validation and retry logic (1 retry on parse/validation failure, 20-second timeout):
+5. **Field Analysis** - `lib/claude.ts` uses Claude Sonnet 4 (model: `claude-sonnet-4-20250514`) to identify 14 required invoice fields with Zod validation, markdown code fence stripping, and retry logic (1 retry on parse/validation failure, 20-second timeout):
    - factuurnummer (invoice number)
    - factuurdatum (invoice date)
    - leverancierNaam (vendor name)
@@ -128,9 +128,9 @@ npm test -- --ui      # Open interactive test UI
 npm test -- --watch   # Watch mode
 ```
 
-**Test Coverage (130 tests across 11 suites):**
+**Test Coverage (131 tests across 11 suites):**
 
-### Library Tests (35 tests)
+### Library Tests (36 tests)
 
 1. **`__tests__/lib/compliance.test.ts`** (8 tests)
    - Green status (0 missing fields)
@@ -152,7 +152,7 @@ npm test -- --watch   # Watch mode
    - Promise rejects on timeout
    - Original error preserved
 
-5. **`__tests__/lib/claude.test.ts`** (8 tests)
+5. **`__tests__/lib/claude.test.ts`** (9 tests)
    - Valid Claude response parsing with Zod
    - Retry on JSON parse failure
    - Retry on Zod validation failure
@@ -160,6 +160,7 @@ npm test -- --watch   # Watch mode
    - Required fields validation
    - Address field parsing
    - Incomplete address handling
+   - Markdown code fence stripping
 
 6. **`__tests__/lib/document-ai.test.ts`** (10 tests)
    - Text extraction from valid PDF
